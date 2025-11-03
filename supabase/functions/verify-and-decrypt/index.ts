@@ -66,8 +66,17 @@ serve(async (req) => {
     }
 
     // Derive KEK from OTP
-    const salt = Uint8Array.from(atob(file.key_salt), c => c.charCodeAt(0));
-    const keyIv = Uint8Array.from(atob(file.key_iv), c => c.charCodeAt(0));
+    const saltBytes = atob(file.key_salt);
+    const salt = new Uint8Array(saltBytes.length);
+    for (let i = 0; i < saltBytes.length; i++) {
+      salt[i] = saltBytes.charCodeAt(i);
+    }
+    
+    const keyIvBytes = atob(file.key_iv);
+    const keyIv = new Uint8Array(keyIvBytes.length);
+    for (let i = 0; i < keyIvBytes.length; i++) {
+      keyIv[i] = keyIvBytes.charCodeAt(i);
+    }
 
     const otpKey = await crypto.subtle.importKey(
       "raw",
@@ -91,7 +100,11 @@ serve(async (req) => {
     );
 
     // Unwrap (decrypt) the AES key
-    const wrappedKey = Uint8Array.from(atob(file.encrypted_aes_key), c => c.charCodeAt(0));
+    const wrappedKeyBytes = atob(file.encrypted_aes_key);
+    const wrappedKey = new Uint8Array(wrappedKeyBytes.length);
+    for (let i = 0; i < wrappedKeyBytes.length; i++) {
+      wrappedKey[i] = wrappedKeyBytes.charCodeAt(i);
+    }
     
     const aesKey = await crypto.subtle.unwrapKey(
       "raw",
@@ -158,8 +171,14 @@ serve(async (req) => {
       access_status: "success",
     });
 
-    // Convert to base64 for transmission
-    const base64File = btoa(String.fromCharCode(...decryptedArray));
+    // Convert to base64 for transmission (chunked to avoid stack overflow)
+    let binaryString = '';
+    const chunkSize = 8192; // Process in 8KB chunks
+    for (let i = 0; i < decryptedArray.length; i += chunkSize) {
+      const chunk = decryptedArray.subarray(i, Math.min(i + chunkSize, decryptedArray.length));
+      binaryString += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    const base64File = btoa(binaryString);
 
     return new Response(
       JSON.stringify({
