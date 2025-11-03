@@ -45,7 +45,8 @@ const MyFiles = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setFiles(data || []);
+      // Filter out deleted files
+      setFiles((data || []).filter(file => file.file_status !== "deleted"));
     } catch (error) {
       console.error("Error loading files:", error);
       toast.error("Failed to load files");
