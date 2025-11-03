@@ -1,4 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Resend } from "https://esm.sh/resend@4.0.0";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY") as string);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,16 +92,19 @@ serve(async (req) => {
       </html>
     `;
 
-    // Log email content (in production, use actual email service)
-    console.log("Email would be sent to:", recipientEmail);
-    console.log("OTP:", otp);
-    console.log("File:", fileName);
-    
-    // TODO: Integrate with actual email service (Resend/SendGrid)
-    // For now, just log success
+    // Send email using Resend
+    const emailResponse = await resend.emails.send({
+      from: "SecureShare <onboarding@resend.dev>",
+      to: [recipientEmail],
+      subject: `🔐 Secure File Access Code - ${fileName}`,
+      html: emailHtml,
+    });
+
+    console.log("Email sent successfully to:", recipientEmail);
+    console.log("Resend response:", emailResponse);
 
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, emailId: emailResponse.data?.id }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
