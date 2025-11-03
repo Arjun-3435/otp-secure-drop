@@ -16,8 +16,9 @@ serve(async (req) => {
   try {
     const { recipientEmail, otp, fileName, fileId, senderEmail, expiryMinutes } = await req.json();
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const accessLink = `${supabaseUrl.replace("/v1", "")}/access/${fileId}`;
+    // Use the frontend app URL instead of Supabase URL
+    const appUrl = Deno.env.get("APP_URL") || "https://9eacf705-688f-4eaf-8989-f5172ac0faab.lovableproject.com";
+    const accessLink = `${appUrl}/access/${fileId}`;
 
     // Send email using Gmail SMTP via fetch to a relay service or direct SMTP
     // For now, using a simple implementation - in production, use Resend or SendGrid

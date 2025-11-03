@@ -114,7 +114,11 @@ serve(async (req) => {
     const encryptedBuffer = await fileData.arrayBuffer();
 
     // Decrypt file with AES-GCM
-    const fileIv = Uint8Array.from(atob(file.file_iv), c => c.charCodeAt(0));
+    const fileIvBytes = atob(file.file_iv);
+    const fileIv = new Uint8Array(fileIvBytes.length);
+    for (let i = 0; i < fileIvBytes.length; i++) {
+      fileIv[i] = fileIvBytes.charCodeAt(i);
+    }
     
     const decryptedFile = await crypto.subtle.decrypt(
       { name: "AES-GCM", iv: fileIv },
