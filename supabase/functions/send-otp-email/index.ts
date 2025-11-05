@@ -1,7 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@4.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY") as string);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -93,19 +90,40 @@ serve(async (req) => {
       </html>
     `;
 
-    // Send email using Resend
-    const emailResponse = await resend.emails.send({
-      from: "SecureShare <onboarding@resend.dev>",
-      to: [recipientEmail],
-      subject: `🔐 Secure File Access Code - ${fileName}`,
-      html: emailHtml,
+    // Send via SMTP2GO API
+    const response = await fetch("https://api.smtp2go.com/v3/email/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Smtp2go-Api-Key": Deno.env.get("SMTP2GO_API_KEY") || ""
+      },
+      body: JSON.stringify({
+        sender: "SecureShare <noreply@secureshare.com>",
+        to: [recipientEmail],
+        subject: `🔐 ${otp} - Your SecureShare Access Code`,
+        html_body: emailHtml,
+        custom_headers: [
+          { header: "X-Priority", value: "1" },
+          { header: "Importance", value: "high" }
+        ]
+      })
     });
 
+    const result = await response.json();
+
+    if (!response.ok || result.data?.failed > 0) {
+      throw new Error(result.data?.error || "Email sending failed");
+    }
+
     console.log("Email sent successfully to:", recipientEmail);
-    console.log("Resend response:", emailResponse);
+    console.log("SMTP2GO response:", result);
 
     return new Response(
-      JSON.stringify({ success: true, emailId: emailResponse.data?.id }),
+      JSON.stringify({ 
+        success: true, 
+        emailId: result.data?.email_id,
+        succeeded: result.data?.succeeded
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -114,7 +132,10 @@ serve(async (req) => {
   } catch (error) {
     console.error("Email error:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Email failed" }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : "Email sending failed",
+        details: error instanceof Error ? error.stack : undefined
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,

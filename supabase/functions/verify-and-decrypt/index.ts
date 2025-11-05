@@ -171,9 +171,9 @@ serve(async (req) => {
       access_status: "success",
     });
 
-    // Convert to base64 for transmission (chunked to avoid stack overflow)
+    // Convert to base64 for transmission (larger chunks for better performance)
     let binaryString = '';
-    const chunkSize = 8192; // Process in 8KB chunks
+    const chunkSize = 65536; // Process in 64KB chunks (faster than 8KB)
     for (let i = 0; i < decryptedArray.length; i += chunkSize) {
       const chunk = decryptedArray.subarray(i, Math.min(i + chunkSize, decryptedArray.length));
       binaryString += String.fromCharCode.apply(null, Array.from(chunk));

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ const Access = () => {
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
   const [loadingInfo, setLoadingInfo] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState("");
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (fileId) {
@@ -52,9 +53,11 @@ const Access = () => {
 
   const loadFileInfo = async () => {
     try {
-      // We need to make this publicly accessible - create a public edge function
       const { data, error } = await supabase.functions.invoke("get-file-info", {
         body: { fileId },
+        headers: { 
+          'Cache-Control': 'max-age=60' // Cache file info for 60 seconds
+        }
       });
 
       if (error) throw error;
@@ -197,7 +200,18 @@ const Access = () => {
                 placeholder="Enter 6-digit code"
                 className="text-center text-2xl tracking-widest"
                 value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+                  // Debounce OTP input for better performance
+                  if (debounceTimer.current) {
+                    clearTimeout(debounceTimer.current);
+                  }
+                  debounceTimer.current = setTimeout(() => {
+                    setOtp(value);
+                  }, 150);
+                  // Update immediately for display
+                  setOtp(value);
+                }}
                 maxLength={6}
                 required
                 autoFocus

@@ -24,6 +24,9 @@ const MyFiles = () => {
   const navigate = useNavigate();
   const [files, setFiles] = useState<FileRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const PAGE_SIZE = 20;
 
   useEffect(() => {
     checkAuth();
@@ -37,22 +40,40 @@ const MyFiles = () => {
     }
   };
 
-  const loadFiles = async () => {
+  const loadFiles = async (pageNum = 0) => {
     try {
+      const from = pageNum * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      
       const { data, error } = await supabase
         .from("files")
         .select("*")
-        .order("created_at", { ascending: false });
+        .neq("file_status", "deleted")
+        .order("created_at", { ascending: false })
+        .range(from, to)
+        .limit(PAGE_SIZE);
 
       if (error) throw error;
-      // Filter out deleted files
-      setFiles((data || []).filter(file => file.file_status !== "deleted"));
+      
+      setHasMore((data || []).length === PAGE_SIZE);
+      
+      if (pageNum === 0) {
+        setFiles(data || []);
+      } else {
+        setFiles(prev => [...prev, ...(data || [])]);
+      }
     } catch (error) {
       console.error("Error loading files:", error);
       toast.error("Failed to load files");
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    loadFiles(nextPage);
   };
 
   const copyAccessLink = (fileId: string) => {
@@ -205,6 +226,18 @@ const MyFiles = () => {
                   </div>
                 </Card>
               ))}
+              
+              {hasMore && files.length > 0 && (
+                <div className="text-center pt-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={loadMore}
+                    className="gap-2"
+                  >
+                    Load More Files
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
