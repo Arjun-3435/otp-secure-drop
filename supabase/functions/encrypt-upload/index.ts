@@ -143,7 +143,7 @@ serve(async (req) => {
     if (dbError) throw dbError;
 
     // Send OTP via email asynchronously (don't wait - faster response)
-    supabaseClient.functions.invoke("send-otp-email", {
+    const emailPromise = supabaseClient.functions.invoke("send-otp-email", {
       body: {
         recipientEmail,
         otp,
@@ -152,6 +152,15 @@ serve(async (req) => {
         senderEmail: user.email,
         expiryMinutes: otpValidityMinutes,
       },
+    });
+
+    // Log email status after response sent
+    emailPromise.then(({ error: emailError }) => {
+      if (emailError) {
+        console.error("Email sending failed:", emailError);
+      } else {
+        console.log("OTP email sent successfully to:", recipientEmail);
+      }
     }).catch(err => console.error("Email error:", err));
 
     // Log upload and update storage in parallel (non-blocking)

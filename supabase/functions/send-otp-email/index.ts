@@ -98,7 +98,7 @@ serve(async (req) => {
         "X-Smtp2go-Api-Key": Deno.env.get("SMTP2GO_API_KEY") || ""
       },
       body: JSON.stringify({
-        sender: "SecureShare <noreply@secureshare.com>",
+        sender: Deno.env.get("SENDER_EMAIL") || "SecureShare <s2parjun@gmail.com>",
         to: [recipientEmail],
         subject: `🔐 ${otp} - Your SecureShare Access Code`,
         html_body: emailHtml,
