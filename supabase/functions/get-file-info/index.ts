@@ -24,7 +24,6 @@ serve(async (req) => {
       .from("files")
       .select("original_filename, file_size, upload_timestamp, otp_expires_at, max_access_attempts, access_count, file_description, file_status")
       .eq("id", fileId)
-      .limit(1)
       .single();
 
     if (fileError || !file) throw new Error("File not found");

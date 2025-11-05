@@ -36,20 +36,15 @@ serve(async (req) => {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const originalFileHash = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 
-    // Generate all keys and IVs in parallel for better performance
-    const [aesKey, salt, fileIv, keyIv] = await Promise.all([
-      crypto.subtle.generateKey(
-        { name: "AES-GCM", length: 256 },
-        true,
-        ["encrypt", "decrypt"]
-      ),
-      Promise.resolve(crypto.getRandomValues(new Uint8Array(16))),
-      Promise.resolve(crypto.getRandomValues(new Uint8Array(12))),
-      Promise.resolve(crypto.getRandomValues(new Uint8Array(12)))
-    ]);
+    // Generate random AES-256 key
+    const aesKey = await crypto.subtle.generateKey(
+      { name: "AES-GCM", length: 256 },
+      true,
+      ["encrypt", "decrypt"]
+    );
 
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate random IV (96 bits for GCM)
+    const fileIv = crypto.getRandomValues(new Uint8Array(12));
 
     // Encrypt file with AES-GCM
     const encryptedFile = await crypto.subtle.encrypt(
@@ -57,6 +52,12 @@ serve(async (req) => {
       aesKey,
       fileBuffer
     );
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Generate salt for PBKDF2
+    const salt = crypto.getRandomValues(new Uint8Array(16));
 
     // Derive KEK from OTP using PBKDF2
     const otpEncoder = new TextEncoder();
@@ -80,6 +81,9 @@ serve(async (req) => {
       true,
       ["wrapKey", "unwrapKey"]
     );
+
+    // Generate IV for key encryption
+    const keyIv = crypto.getRandomValues(new Uint8Array(12));
 
     // Wrap (encrypt) AES key with KEK
     const wrappedKey = await crypto.subtle.wrapKey(
@@ -142,8 +146,8 @@ serve(async (req) => {
 
     if (dbError) throw dbError;
 
-    // Send OTP via email asynchronously (don't wait - faster response)
-    const emailPromise = supabaseClient.functions.invoke("send-otp-email", {
+    // Send OTP via email
+    const { error: emailError } = await supabaseClient.functions.invoke("send-otp-email", {
       body: {
         recipientEmail,
         otp,
@@ -154,38 +158,32 @@ serve(async (req) => {
       },
     });
 
-    // Log email status after response sent
-    emailPromise.then(({ error: emailError }) => {
-      if (emailError) {
-        console.error("Email sending failed:", emailError);
-      } else {
-        console.log("OTP email sent successfully to:", recipientEmail);
-      }
-    }).catch(err => console.error("Email error:", err));
+    if (emailError) {
+      console.error("Email error:", emailError);
+      // Don't fail the whole operation if email fails
+    }
 
-    // Log upload and update storage in parallel (non-blocking)
-    Promise.all([
-      supabaseClient.from("access_logs").insert({
-        file_id: fileId,
-        user_id: user.id,
-        access_type: "upload",
-        access_status: "success",
-      }),
-      supabaseClient
+    // Log upload
+    await supabaseClient.from("access_logs").insert({
+      file_id: fileId,
+      user_id: user.id,
+      access_type: "upload",
+      access_status: "success",
+    });
+
+    // Update storage used
+    const { data: profile } = await supabaseClient
+      .from("profiles")
+      .select("storage_used")
+      .eq("id", user.id)
+      .single();
+
+    if (profile) {
+      await supabaseClient
         .from("profiles")
-        .select("storage_used")
-        .eq("id", user.id)
-        .limit(1)
-        .single()
-        .then(({ data: profile }) => {
-          if (profile) {
-            return supabaseClient
-              .from("profiles")
-              .update({ storage_used: (profile.storage_used || 0) + fileSize })
-              .eq("id", user.id);
-          }
-        })
-    ]).catch(err => console.error("Background task error:", err));
+        .update({ storage_used: (profile.storage_used || 0) + fileSize })
+        .eq("id", user.id);
+    }
 
     return new Response(
       JSON.stringify({ success: true, fileId }),
