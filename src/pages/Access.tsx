@@ -24,8 +24,9 @@ const Access = () => {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
-  const [loadingInfo, setLoadingInfo] = useState(true);
+  const [loadingInfo, setLoadingInfo] = useState(!!fileId);
   const [timeRemaining, setTimeRemaining] = useState("");
+  const [linkInput, setLinkInput] = useState("");
 
   useEffect(() => {
     if (fileId) {
@@ -111,6 +112,72 @@ const Access = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <div className="animate-pulse text-muted-foreground">Loading file information...</div>
+      </div>
+    );
+  }
+
+  const handleLinkSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Extract fileId from link or use input directly
+    const match = linkInput.match(/\/access\/([a-f0-9-]+)/);
+    const extractedId = match ? match[1] : linkInput.trim();
+    
+    if (extractedId) {
+      window.location.href = `/access/${extractedId}`;
+    } else {
+      toast.error("Invalid file link or ID");
+    }
+  };
+
+  if (!fileId) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <Link to="/" className="inline-flex items-center gap-2 mb-4">
+              <Shield className="h-8 w-8 text-primary" />
+              <span className="text-2xl font-bold">SecureShare</span>
+            </Link>
+            <p className="text-muted-foreground">Access Your Secure File</p>
+          </div>
+
+          <Card className="p-8 gradient-card">
+            <form onSubmit={handleLinkSubmit} className="space-y-6">
+              <div className="text-center mb-6">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <FileText className="h-8 w-8 text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold mb-2">Enter File Link</h2>
+                <p className="text-sm text-muted-foreground">
+                  Paste the secure file link you received
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="link">File Link or ID</Label>
+                <Input
+                  id="link"
+                  type="text"
+                  placeholder="https://... or file ID"
+                  value={linkInput}
+                  onChange={(e) => setLinkInput(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <Button type="submit" className="w-full gradient-hero">
+                Access File
+              </Button>
+            </form>
+          </Card>
+
+          <div className="mt-6 text-center">
+            <Link to="/">
+              <Button variant="ghost">Back to Home</Button>
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
