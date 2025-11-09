@@ -67,8 +67,15 @@ const Upload = () => {
 
       if (error) throw error;
 
-      toast.success("File uploaded and encrypted successfully! OTP sent to recipient.");
-      navigate("/my-files");
+      const shareLink = data.shareLink || `${window.location.origin}/access/${data.fileId}`;
+      
+      // Copy link to clipboard
+      await navigator.clipboard.writeText(shareLink);
+      
+      toast.success("File encrypted! Share link copied to clipboard. OTP sent to recipient's email.");
+      
+      // Show the share link in a dialog or navigate
+      setTimeout(() => navigate("/my-files"), 2000);
     } catch (error: any) {
       console.error("Upload error:", error);
       toast.error(error.message || "Failed to upload file");
