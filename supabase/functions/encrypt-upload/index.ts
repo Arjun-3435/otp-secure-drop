@@ -146,8 +146,8 @@ serve(async (req) => {
 
     if (dbError) throw dbError;
 
-    // Send OTP via email
-    const { error: emailError } = await supabaseClient.functions.invoke("send-otp-email", {
+    // Send OTP via email (non-blocking - don't fail upload if email fails)
+    supabaseClient.functions.invoke("send-otp-email", {
       body: {
         recipientEmail,
         otp,
@@ -156,12 +156,15 @@ serve(async (req) => {
         senderEmail: user.email,
         expiryMinutes: otpValidityMinutes,
       },
+    }).then(({ error: emailError }) => {
+      if (emailError) {
+        console.error("Email sending failed:", emailError);
+      } else {
+        console.log("OTP email sent successfully to:", recipientEmail);
+      }
+    }).catch(err => {
+      console.error("Email invocation error:", err);
     });
-
-    if (emailError) {
-      console.error("Email error:", emailError);
-      // Don't fail the whole operation if email fails
-    }
 
     // Log upload
     await supabaseClient.from("access_logs").insert({
@@ -185,8 +188,18 @@ serve(async (req) => {
         .eq("id", user.id);
     }
 
+    // Get app URL for share link
+    const appUrl = Deno.env.get("APP_URL") || "https://9eacf705-688f-4eaf-8989-f5172ac0faab.lovableproject.com";
+    const shareLink = `${appUrl}/access/${fileId}`;
+
     return new Response(
-      JSON.stringify({ success: true, fileId }),
+      JSON.stringify({ 
+        success: true, 
+        fileId,
+        shareLink,
+        // Include OTP in dev mode for testing if email fails
+        ...(Deno.env.get("INCLUDE_OTP_IN_RESPONSE") === "true" && { otp })
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
