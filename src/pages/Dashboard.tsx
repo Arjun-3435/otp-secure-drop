@@ -90,6 +90,12 @@ const Dashboard = () => {
                 My Files
               </Button>
             </Link>
+            <Link to="/activity-log">
+              <Button variant="ghost" className="gap-2">
+                <Activity className="h-4 w-4" />
+                Activity
+              </Button>
+            </Link>
             <Button variant="ghost" onClick={handleLogout} className="gap-2">
               <LogOut className="h-4 w-4" />
               Logout
