@@ -14,6 +14,9 @@ const Index = () => {
             <span className="text-xl font-bold">SecureShare</span>
           </div>
           <div className="flex items-center gap-4">
+            <Link to="/how-it-works">
+              <Button variant="ghost">How It Works</Button>
+            </Link>
             <Link to="/auth">
               <Button variant="ghost">Sign In</Button>
             </Link>
@@ -167,6 +170,14 @@ const Index = () => {
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
               <span className="font-semibold">SecureShare</span>
+            </div>
+            <div className="flex gap-6 text-sm text-muted-foreground">
+              <Link to="/how-it-works" className="hover:text-foreground transition-smooth">
+                How It Works
+              </Link>
+              <Link to="/auth" className="hover:text-foreground transition-smooth">
+                Sign In
+              </Link>
             </div>
             <p className="text-sm text-muted-foreground">
               © 2025 SecureShare. All rights reserved. Built with security first.

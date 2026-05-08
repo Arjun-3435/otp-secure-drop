@@ -10,6 +10,7 @@ import Upload from "./pages/Upload";
 import MyFiles from "./pages/MyFiles";
 import Access from "./pages/Access";
 import ActivityLog from "./pages/ActivityLog";
+import HowItWorks from "./pages/HowItWorks";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/access/:fileId" element={<Access />} />
           <Route path="/access" element={<Access />} />
           <Route path="/activity-log" element={<ActivityLog />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
