@@ -10,6 +10,7 @@ import Upload from "./pages/Upload";
 import MyFiles from "./pages/MyFiles";
 import Access from "./pages/Access";
 import ActivityLog from "./pages/ActivityLog";
+import HowItWorks from "./pages/HowItWorks";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
