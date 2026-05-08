@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Shield, Upload, Files, LogOut, FileText, Download, Clock } from "lucide-react";
+import { Shield, Upload, Files, LogOut, FileText, Download, Clock, Activity } from "lucide-react";
 import { toast } from "sonner";
 
 const Dashboard = () => {
