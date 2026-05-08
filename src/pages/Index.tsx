@@ -14,6 +14,9 @@ const Index = () => {
             <span className="text-xl font-bold">SecureShare</span>
           </div>
           <div className="flex items-center gap-4">
+            <Link to="/how-it-works">
+              <Button variant="ghost">How It Works</Button>
+            </Link>
             <Link to="/auth">
               <Button variant="ghost">Sign In</Button>
             </Link>
