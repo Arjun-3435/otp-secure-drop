@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Shield, Upload, Files, LogOut, FileText, Download, Clock } from "lucide-react";
+import { Shield, Upload, Files, LogOut, FileText, Download, Clock, Activity } from "lucide-react";
 import { toast } from "sonner";
 
 const Dashboard = () => {
@@ -88,6 +88,12 @@ const Dashboard = () => {
               <Button variant="ghost" className="gap-2">
                 <Files className="h-4 w-4" />
                 My Files
+              </Button>
+            </Link>
+            <Link to="/activity-log">
+              <Button variant="ghost" className="gap-2">
+                <Activity className="h-4 w-4" />
+                Activity
               </Button>
             </Link>
             <Button variant="ghost" onClick={handleLogout} className="gap-2">
