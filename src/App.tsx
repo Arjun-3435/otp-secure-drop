@@ -28,6 +28,7 @@ const App = () => (
           <Route path="/my-files" element={<MyFiles />} />
           <Route path="/access/:fileId" element={<Access />} />
           <Route path="/access" element={<Access />} />
+          <Route path="/activity-log" element={<ActivityLog />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
