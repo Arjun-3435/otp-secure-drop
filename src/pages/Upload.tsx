@@ -229,8 +229,86 @@ const Upload = () => {
           </div>
         </div>
       </div>
+      </div>
+
+      <Dialog
+        open={!!shareInfo}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShareInfo(null);
+            navigate("/my-files");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>File Encrypted Successfully!</DialogTitle>
+            <DialogDescription>
+              Share the link AND the OTP code with your recipient separately.
+            </DialogDescription>
+          </DialogHeader>
+
+          {shareInfo && (
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <Label>One-Time Password (OTP)</Label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 text-center font-mono text-3xl font-bold tracking-[0.5em] py-4 rounded-lg bg-muted border">
+                    {shareInfo.otp}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(shareInfo.otp, "OTP")}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Share Link</Label>
+                <div className="flex items-center gap-2">
+                  <Input readOnly value={shareInfo.link} className="font-mono text-xs" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(shareInfo.link, "Link")}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm">
+                <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                <p className="text-destructive-foreground/90">
+                  Share the link AND this OTP code with your recipient separately —
+                  the OTP won't be shown again.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setShareInfo(null);
+                navigate("/my-files");
+              }}
+              className="w-full"
+            >
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
+export default Upload;
 
 export default Upload;
