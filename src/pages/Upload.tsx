@@ -24,6 +24,16 @@ const Upload = () => {
   const [recipientEmail, setRecipientEmail] = useState("");
   const [description, setDescription] = useState("");
   const [otpValidity, setOtpValidity] = useState("10");
+  const [shareInfo, setShareInfo] = useState<{ link: string; otp: string } | null>(null);
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copied to clipboard`);
+    } catch {
+      toast.error("Failed to copy");
+    }
+  };
 
   useEffect(() => {
     checkAuth();
