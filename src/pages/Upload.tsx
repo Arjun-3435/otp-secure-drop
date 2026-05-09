@@ -86,14 +86,17 @@ const Upload = () => {
       if (error) throw error;
 
       const shareLink = data.shareLink || `${window.location.origin}/access/${data.fileId}`;
-      
-      // Copy link to clipboard
-      await navigator.clipboard.writeText(shareLink);
-      
-      toast.success("File encrypted! Share link copied to clipboard. OTP sent to recipient's email.");
-      
-      // Show the share link in a dialog or navigate
-      setTimeout(() => navigate("/my-files"), 2000);
+
+      if (data?.otp) {
+        // OTP returned in response (email delivery may not be available) — show modal
+        setShareInfo({ link: shareLink, otp: data.otp });
+        toast.success("File encrypted successfully!");
+      } else {
+        // Default behavior: copy link, navigate, OTP went via email
+        await navigator.clipboard.writeText(shareLink);
+        toast.success("File encrypted! Share link copied to clipboard. OTP sent to recipient's email.");
+        setTimeout(() => navigate("/my-files"), 2000);
+      }
     } catch (error: any) {
       console.error("Upload error:", error);
       toast.error(error.message || "Failed to upload file");
