@@ -6,8 +6,16 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Shield, Upload as UploadIcon, ArrowLeft, Mail, Clock } from "lucide-react";
+import { Shield, Upload as UploadIcon, ArrowLeft, Mail, Clock, Copy, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const Upload = () => {
   const navigate = useNavigate();
@@ -16,6 +24,16 @@ const Upload = () => {
   const [recipientEmail, setRecipientEmail] = useState("");
   const [description, setDescription] = useState("");
   const [otpValidity, setOtpValidity] = useState("10");
+  const [shareInfo, setShareInfo] = useState<{ link: string; otp: string } | null>(null);
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copied to clipboard`);
+    } catch {
+      toast.error("Failed to copy");
+    }
+  };
 
   useEffect(() => {
     checkAuth();
@@ -68,14 +86,17 @@ const Upload = () => {
       if (error) throw error;
 
       const shareLink = data.shareLink || `${window.location.origin}/access/${data.fileId}`;
-      
-      // Copy link to clipboard
-      await navigator.clipboard.writeText(shareLink);
-      
-      toast.success("File encrypted! Share link copied to clipboard. OTP sent to recipient's email.");
-      
-      // Show the share link in a dialog or navigate
-      setTimeout(() => navigate("/my-files"), 2000);
+
+      if (data?.otp) {
+        // OTP returned in response (email delivery may not be available) — show modal
+        setShareInfo({ link: shareLink, otp: data.otp });
+        toast.success("File encrypted successfully!");
+      } else {
+        // Default behavior: copy link, navigate, OTP went via email
+        await navigator.clipboard.writeText(shareLink);
+        toast.success("File encrypted! Share link copied to clipboard. OTP sent to recipient's email.");
+        setTimeout(() => navigate("/my-files"), 2000);
+      }
     } catch (error: any) {
       console.error("Upload error:", error);
       toast.error(error.message || "Failed to upload file");
@@ -208,6 +229,81 @@ const Upload = () => {
           </div>
         </div>
       </div>
+
+      <Dialog
+        open={!!shareInfo}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShareInfo(null);
+            navigate("/my-files");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>File Encrypted Successfully!</DialogTitle>
+            <DialogDescription>
+              Share the link AND the OTP code with your recipient separately.
+            </DialogDescription>
+          </DialogHeader>
+
+          {shareInfo && (
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <Label>One-Time Password (OTP)</Label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 text-center font-mono text-3xl font-bold tracking-[0.5em] py-4 rounded-lg bg-muted border">
+                    {shareInfo.otp}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(shareInfo.otp, "OTP")}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Share Link</Label>
+                <div className="flex items-center gap-2">
+                  <Input readOnly value={shareInfo.link} className="font-mono text-xs" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(shareInfo.link, "Link")}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm">
+                <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                <p className="text-destructive-foreground/90">
+                  Share the link AND this OTP code with your recipient separately —
+                  the OTP won't be shown again.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setShareInfo(null);
+                navigate("/my-files");
+              }}
+              className="w-full"
+            >
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
