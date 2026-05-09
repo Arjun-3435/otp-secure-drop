@@ -6,8 +6,16 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Shield, Upload as UploadIcon, ArrowLeft, Mail, Clock } from "lucide-react";
+import { Shield, Upload as UploadIcon, ArrowLeft, Mail, Clock, Copy, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const Upload = () => {
   const navigate = useNavigate();
